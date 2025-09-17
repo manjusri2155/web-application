@@ -1,0 +1,102 @@
+def soil_quality_score(value, ideal_range, weight=1):
+    """
+    Calculates a score (0 to 100) for a parameter based on how close the value is to the ideal range.
+    weight: importance factor for the parameter.
+    """
+    low, high = ideal_range
+    if low <= value <= high:
+        return 100 * weight  # perfect score for being in the ideal range
+    
+    # If outside ideal range, calculate how far it is proportionally
+    if value < low:
+        score = max(0, 100 * (1 - (low - value) / low)) * weight
+    else:  # value > high
+        score = max(0, 100 * (1 - (value - high) / high)) * weight
+    
+    return score
+
+
+def analyze_soil_suitability_with_quality(pH, moisture, nitrogen, phosphorus, potassium, clay, silt, sand):
+    # Ideal ranges (example values)
+    ideal_ranges = {
+        'pH': (6.0, 7.5),
+        'moisture': (20, 60),  # in %
+        'nitrogen': (10, 50),  # ppm
+        'phosphorus': (15, 40),  # ppm
+        'potassium': (100, 250),  # ppm
+    }
+    
+    # Weights for each parameter (importance)
+    weights = {
+        'pH': 3,
+        'moisture': 3,
+        'nitrogen': 2,
+        'phosphorus': 2,
+        'potassium': 2,
+        'texture': 1
+    }
+
+    # Soil texture classification
+    if clay > 40:
+        texture = 'Clay'
+        texture_score = 100 * weights['texture']  # Clay is suitable
+    elif sand > 50:
+        texture = 'Sandy'
+        texture_score = 50 * weights['texture']  # Sandy less ideal
+    else:
+        texture = 'Loamy'
+        texture_score = 100 * weights['texture']  # Loamy is ideal
+
+    # Calculate scores for each parameter
+    pH_score = soil_quality_score(pH, ideal_ranges['pH'], weights['pH'])
+    moisture_score = soil_quality_score(moisture, ideal_ranges['moisture'], weights['moisture'])
+    nitrogen_score = soil_quality_score(nitrogen, ideal_ranges['nitrogen'], weights['nitrogen'])
+    phosphorus_score = soil_quality_score(phosphorus, ideal_ranges['phosphorus'], weights['phosphorus'])
+    potassium_score = soil_quality_score(potassium, ideal_ranges['potassium'], weights['potassium'])
+
+    # Total score out of max possible
+    total_score = pH_score + moisture_score + nitrogen_score + phosphorus_score + potassium_score + texture_score
+    max_score = sum(weights.values()) * 100
+
+    quality_percentage = (total_score / max_score) * 100
+
+    # Quality description based on score
+    if quality_percentage >= 85:
+        quality = "Excellent"
+    elif quality_percentage >= 70:
+        quality = "Good"
+    elif quality_percentage >= 50:
+        quality = "Fair"
+    else:
+        quality = "Poor"
+
+    # Overall suitability based on minimum parameter suitability (simple check)
+    suitability = "Suitable for planting" if quality_percentage >= 50 else "Not suitable for planting"
+
+    # Detailed report
+    report = f"--- Soil Suitability & Quality Analysis ---\n"
+    report += f"pH: {pH} (Score: {pH_score/weights['pH']:.1f}/100)\n"
+    report += f"Moisture: {moisture}% (Score: {moisture_score/weights['moisture']:.1f}/100)\n"
+    report += f"Nitrogen: {nitrogen} ppm (Score: {nitrogen_score/weights['nitrogen']:.1f}/100)\n"
+    report += f"Phosphorus: {phosphorus} ppm (Score: {phosphorus_score/weights['phosphorus']:.1f}/100)\n"
+    report += f"Potassium: {potassium} ppm (Score: {potassium_score/weights['potassium']:.1f}/100)\n"
+    report += f"Soil Texture: {texture} (Score: {texture_score/weights['texture']:.1f}/100)\n"
+    report += f"\nOverall Quality Score: {quality_percentage:.1f}% ({quality})\n"
+    report += f"Overall Suitability: {suitability}\n"
+
+    return report
+
+
+# Example usage
+soil_data = {
+    'pH': 6.8,
+    'moisture': 55,
+    'nitrogen': 25,
+    'phosphorus': 30,
+    'potassium': 180,
+    'clay': 25,
+    'silt': 30,
+    'sand': 45
+}
+
+print(analyze_soil_suitability_with_quality(**soil_data))
