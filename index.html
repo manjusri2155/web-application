@@ -1,102 +1,179 @@
-def soil_quality_score(value, ideal_range, weight=1):
-    """
-    Calculates a score (0 to 100) for a parameter based on how close the value is to the ideal range.
-    weight: importance factor for the parameter.
-    """
-    low, high = ideal_range
-    if low <= value <= high:
-        return 100 * weight  # perfect score for being in the ideal range
-    
-    # If outside ideal range, calculate how far it is proportionally
-    if value < low:
-        score = max(0, 100 * (1 - (low - value) / low)) * weight
-    else:  # value > high
-        score = max(0, 100 * (1 - (value - high) / high)) * weight
-    
-    return score
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Soil Suitability & Quality Analysis</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    max-width: 600px;
+  }
+  label {
+    display: block;
+    margin-top: 10px;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 6px;
+    margin-top: 4px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+  }
+  pre {
+    background: #f4f4f4;
+    padding: 15px;
+    white-space: pre-wrap;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
 
+<h2>Soil Suitability & Quality Analysis</h2>
 
-def analyze_soil_suitability_with_quality(pH, moisture, nitrogen, phosphorus, potassium, clay, silt, sand):
-    # Ideal ranges (example values)
-    ideal_ranges = {
-        'pH': (6.0, 7.5),
-        'moisture': (20, 60),  # in %
-        'nitrogen': (10, 50),  # ppm
-        'phosphorus': (15, 40),  # ppm
-        'potassium': (100, 250),  # ppm
-    }
-    
-    # Weights for each parameter (importance)
-    weights = {
-        'pH': 3,
-        'moisture': 3,
-        'nitrogen': 2,
-        'phosphorus': 2,
-        'potassium': 2,
-        'texture': 1
-    }
+<form id="soilForm">
+  <label>pH (6.0 - 7.5 ideal):
+    <input type="number" step="0.1" min="0" max="14" id="pH" required />
+  </label>
+  <label>Moisture % (20 - 60 ideal):
+    <input type="number" step="1" min="0" max="100" id="moisture" required />
+  </label>
+  <label>Nitrogen ppm (10 - 50 ideal):
+    <input type="number" step="1" min="0" id="nitrogen" required />
+  </label>
+  <label>Phosphorus ppm (15 - 40 ideal):
+    <input type="number" step="1" min="0" id="phosphorus" required />
+  </label>
+  <label>Potassium ppm (100 - 250 ideal):
+    <input type="number" step="1" min="0" id="potassium" required />
+  </label>
+  <label>Clay %:
+    <input type="number" step="1" min="0" max="100" id="clay" required />
+  </label>
+  <label>Silt %:
+    <input type="number" step="1" min="0" max="100" id="silt" required />
+  </label>
+  <label>Sand %:
+    <input type="number" step="1" min="0" max="100" id="sand" required />
+  </label>
 
-    # Soil texture classification
-    if clay > 40:
-        texture = 'Clay'
-        texture_score = 100 * weights['texture']  # Clay is suitable
-    elif sand > 50:
-        texture = 'Sandy'
-        texture_score = 50 * weights['texture']  # Sandy less ideal
-    else:
-        texture = 'Loamy'
-        texture_score = 100 * weights['texture']  # Loamy is ideal
+  <button type="submit">Analyze Soil</button>
+</form>
 
-    # Calculate scores for each parameter
-    pH_score = soil_quality_score(pH, ideal_ranges['pH'], weights['pH'])
-    moisture_score = soil_quality_score(moisture, ideal_ranges['moisture'], weights['moisture'])
-    nitrogen_score = soil_quality_score(nitrogen, ideal_ranges['nitrogen'], weights['nitrogen'])
-    phosphorus_score = soil_quality_score(phosphorus, ideal_ranges['phosphorus'], weights['phosphorus'])
-    potassium_score = soil_quality_score(potassium, ideal_ranges['potassium'], weights['potassium'])
+<h3>Analysis Result:</h3>
+<pre id="result"></pre>
 
-    # Total score out of max possible
-    total_score = pH_score + moisture_score + nitrogen_score + phosphorus_score + potassium_score + texture_score
-    max_score = sum(weights.values()) * 100
-
-    quality_percentage = (total_score / max_score) * 100
-
-    # Quality description based on score
-    if quality_percentage >= 85:
-        quality = "Excellent"
-    elif quality_percentage >= 70:
-        quality = "Good"
-    elif quality_percentage >= 50:
-        quality = "Fair"
-    else:
-        quality = "Poor"
-
-    # Overall suitability based on minimum parameter suitability (simple check)
-    suitability = "Suitable for planting" if quality_percentage >= 50 else "Not suitable for planting"
-
-    # Detailed report
-    report = f"--- Soil Suitability & Quality Analysis ---\n"
-    report += f"pH: {pH} (Score: {pH_score/weights['pH']:.1f}/100)\n"
-    report += f"Moisture: {moisture}% (Score: {moisture_score/weights['moisture']:.1f}/100)\n"
-    report += f"Nitrogen: {nitrogen} ppm (Score: {nitrogen_score/weights['nitrogen']:.1f}/100)\n"
-    report += f"Phosphorus: {phosphorus} ppm (Score: {phosphorus_score/weights['phosphorus']:.1f}/100)\n"
-    report += f"Potassium: {potassium} ppm (Score: {potassium_score/weights['potassium']:.1f}/100)\n"
-    report += f"Soil Texture: {texture} (Score: {texture_score/weights['texture']:.1f}/100)\n"
-    report += f"\nOverall Quality Score: {quality_percentage:.1f}% ({quality})\n"
-    report += f"Overall Suitability: {suitability}\n"
-
-    return report
-
-
-# Example usage
-soil_data = {
-    'pH': 6.8,
-    'moisture': 55,
-    'nitrogen': 25,
-    'phosphorus': 30,
-    'potassium': 180,
-    'clay': 25,
-    'silt': 30,
-    'sand': 45
+<script>
+function soilQualityScore(value, idealRange, weight=1) {
+  const [low, high] = idealRange;
+  if (value >= low && value <= high) {
+    return 100 * weight;
+  }
+  let score;
+  if (value < low) {
+    score = Math.max(0, 100 * (1 - (low - value) / low)) * weight;
+  } else { // value > high
+    score = Math.max(0, 100 * (1 - (value - high) / high)) * weight;
+  }
+  return score;
 }
 
-print(analyze_soil_suitability_with_quality(**soil_data))
+function analyzeSoilSuitability(data) {
+  const idealRanges = {
+    pH: [6.0, 7.5],
+    moisture: [20, 60],
+    nitrogen: [10, 50],
+    phosphorus: [15, 40],
+    potassium: [100, 250]
+  };
+
+  const weights = {
+    pH: 3,
+    moisture: 3,
+    nitrogen: 2,
+    phosphorus: 2,
+    potassium: 2,
+    texture: 1
+  };
+
+  // Soil texture classification
+  let texture, textureScore;
+  if (data.clay > 40) {
+    texture = 'Clay';
+    textureScore = 100 * weights.texture;
+  } else if (data.sand > 50) {
+    texture = 'Sandy';
+    textureScore = 50 * weights.texture;
+  } else {
+    texture = 'Loamy';
+    textureScore = 100 * weights.texture;
+  }
+
+  // Calculate scores
+  const pHScore = soilQualityScore(data.pH, idealRanges.pH, weights.pH);
+  const moistureScore = soilQualityScore(data.moisture, idealRanges.moisture, weights.moisture);
+  const nitrogenScore = soilQualityScore(data.nitrogen, idealRanges.nitrogen, weights.nitrogen);
+  const phosphorusScore = soilQualityScore(data.phosphorus, idealRanges.phosphorus, weights.phosphorus);
+  const potassiumScore = soilQualityScore(data.potassium, idealRanges.potassium, weights.potassium);
+
+  const totalScore = pHScore + moistureScore + nitrogenScore + phosphorusScore + potassiumScore + textureScore;
+  const maxScore = Object.values(weights).reduce((a,b) => a+b, 0) * 100;
+  const qualityPercent = (totalScore / maxScore) * 100;
+
+  let quality;
+  if (qualityPercent >= 85) quality = "Excellent";
+  else if (qualityPercent >= 70) quality = "Good";
+  else if (qualityPercent >= 50) quality = "Fair";
+  else quality = "Poor";
+
+  const suitability = qualityPercent >= 50 ? "Suitable for planting" : "Not suitable for planting";
+
+  return `
+--- Soil Suitability & Quality Analysis ---
+pH: ${data.pH} (Score: ${(pHScore/weights.pH).toFixed(1)}/100)
+Moisture: ${data.moisture}% (Score: ${(moistureScore/weights.moisture).toFixed(1)}/100)
+Nitrogen: ${data.nitrogen} ppm (Score: ${(nitrogenScore/weights.nitrogen).toFixed(1)}/100)
+Phosphorus: ${data.phosphorus} ppm (Score: ${(phosphorusScore/weights.phosphorus).toFixed(1)}/100)
+Potassium: ${data.potassium} ppm (Score: ${(potassiumScore/weights.potassium).toFixed(1)}/100)
+Soil Texture: ${texture} (Score: ${(textureScore/weights.texture).toFixed(1)}/100)
+
+Overall Quality Score: ${qualityPercent.toFixed(1)}% (${quality})
+Overall Suitability: ${suitability}
+  `.trim();
+}
+
+document.getElementById('soilForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  // Read input values
+  const data = {
+    pH: parseFloat(document.getElementById('pH').value),
+    moisture: parseFloat(document.getElementById('moisture').value),
+    nitrogen: parseFloat(document.getElementById('nitrogen').value),
+    phosphorus: parseFloat(document.getElementById('phosphorus').value),
+    potassium: parseFloat(document.getElementById('potassium').value),
+    clay: parseFloat(document.getElementById('clay').value),
+    silt: parseFloat(document.getElementById('silt').value),
+    sand: parseFloat(document.getElementById('sand').value),
+  };
+
+  // Check if clay+silt+sand = 100 (basic validation)
+  const totalTexture = data.clay + data.silt + data.sand;
+  if (totalTexture !== 100) {
+    document.getElementById('result').textContent = 'Error: Clay + Silt + Sand percentages must add up to 100%.';
+    return;
+  }
+
+  // Analyze soil
+  const resultText = analyzeSoilSuitability(data);
+  document.getElementById('result').textContent = resultText;
+});
+</script>
+
+</body>
+</html>
